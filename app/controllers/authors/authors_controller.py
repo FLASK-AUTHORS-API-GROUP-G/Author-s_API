@@ -11,7 +11,7 @@ authors = Blueprint('authors', __name__,url_prefix='/api/v1/authors')
 
         
 # Get all authors 
-@authors.get('/author')
+@authors.get('/all')
 @jwt_required()
 def get_all_authors():
     
@@ -132,7 +132,7 @@ def get_author(id):
         
         
         
-# Updating user details
+# Updating author details
 
 @authors.route('/edit/<int:id>', methods=['PUT','PATCH'])
 @jwt_required()
