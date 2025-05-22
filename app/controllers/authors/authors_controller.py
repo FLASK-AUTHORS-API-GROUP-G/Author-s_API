@@ -152,10 +152,6 @@ def update_author_details(id):
                 'error':'Author not found'
             }), HTTP_400_BAD_REQUEST
             
-        # elif author.id!= current_author:
-        #     return jsonify({
-        #         'error': 'You are not authorized to update the details'
-        #     })
             
             
         else:
@@ -234,7 +230,7 @@ def delete_author(id):
                 'error':'Author not found'
             }), HTTP_400_BAD_REQUEST
             
-        elif author.id!= current_author:
+        elif author.id == current_author:
             return jsonify({
                 'error': 'You are not authorized to delete the details'
             }), HTTP_403_FORBIDDEN
@@ -269,4 +265,71 @@ def delete_author(id):
             'error': str(e)
         }),HTTP_404_NOT_FOUND
 
+# searching for author
 
+@authors.get('search')
+@jwt_required()
+def searchAuthors():
+    
+    try:
+        searchQuery = request.args.get('query', '')
+        
+        authors = Author.query.filter ( ((Author.first_name.ilike(f'%{searchQuery}')) |
+                                        (Author.last_name.ilike(f'%{searchQuery}')))).all()
+        
+        if len(authors) == 0:
+            return jsonify({
+                'message' : 'No results found'
+            })
+        else:
+        
+            authors_data = []
+        
+        for author in authors:
+            author_info ={
+                'id':author.id,
+                'first_name': author.first_name,
+                'last_name': author.last_name,
+                'username': author.author_info(),
+                'email': author.email,
+                'contact':author.contact,
+                'created_at': author.created_at,
+                'companys':[],
+                'books':[]
+                
+            }
+            
+            if hasattr(author,'books'):   #check if the attribute has the data we want to access.
+                author_info['books'] = [{   #use a list
+                    'id': book.id,
+                    'title':book.title,
+                    'price':book.price,
+                    'genre':book.genre,
+                    'description':book.description,
+                    'publication_date': book.publication_date,
+                    'image':book.image,
+                    'created_at': book.created_at
+                }for book in author.books]
+                
+            if hasattr(author,'companys'):
+                author_info['companys']= [{
+                    'id':company.id,
+                    'full_names':company.full_names,
+                    'origin':company.origin,
+                    } for company in author.companys]
+                        
+            authors_data.append(author_info)
+            
+        return jsonify({
+                'message': 'Authors with name {searchQuery} retrived successfully',
+                'total_authors':len(authors_data),
+                'author': authors_data
+                
+            }),HTTP_200_OK
+            
+    
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), HTTP_500_INTERNAL_SERVER_ERROR
+        jk
